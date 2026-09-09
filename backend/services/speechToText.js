@@ -1,7 +1,9 @@
 const axios = require("axios");
+const dotenv = require("dotenv");
+dotenv.config();
 const fs = require("fs");
 const FormData = require("form-data");
-
+const STT_URL = process.env.STT_URL
 async function speechToText(audioPath) {
     try {
         const form = new FormData();
@@ -12,7 +14,7 @@ async function speechToText(audioPath) {
         );
 
         const response = await axios.post(
-            "http://127.0.0.1:8000/transcribe",
+            STT_URL,
             form,
             {
                 headers: form.getHeaders(),
