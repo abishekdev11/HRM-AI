@@ -6,7 +6,7 @@ const {
   getDepartments,
   updateDepartment,
   deleteDepartment,
-} = require("../controllers/DepartmentController");
+} = require("../controllers/departmentController");
 const protect = require("../middleware/authMiddleware");
 
 router.post("/", protect, createDepartment);
