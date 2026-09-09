@@ -1,0 +1,22 @@
+# Node
+node_modules/
+npm-debug.log
+
+# Environment variables (never commit secrets)
+.env
+.env.local
+**/.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Build outputs
+frontend/dist/
+frontend/build/
+backend/.env
+
+# Editor/OS files
+.vscode/
+.DS_Store

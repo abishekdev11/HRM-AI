@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+html, body, #root {
+  margin: 0;
+  min-height: 100%;
+  min-height: 100vh;
+  width: 100%;
+}
+
+body {
+  background: #f3f4f6;
+  transition: background-color 0.2s ease;
+}
+
+@media (max-width: 767px) {
+  body {
+    background: #eef2f7;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1279px) {
+  body {
+    background: linear-gradient(180deg, #f4f6fb 0%, #eef3f8 100%);
+  }
+}
+
+@media (min-width: 1280px) {
+  body {
+    background: linear-gradient(135deg, #f5f7fb 0%, #edf3f9 45%, #ebf2f4 100%);
+  }
+}
