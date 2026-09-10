@@ -123,7 +123,6 @@ const updateDepartment = async (req, res) => {
     });
   }
 };
-const a= 4
 const deleteDepartment = async (req, res) => {
   try {
     const { id } = req.params;
