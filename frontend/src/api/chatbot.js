@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: "https://hrm-ai-backend-ltot.onrender.com",
 });
 
 // Add token to all requests
