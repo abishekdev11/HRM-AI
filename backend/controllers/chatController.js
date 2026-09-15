@@ -6,9 +6,10 @@ const {
     executeChatAction,
     getWorkflowHelpResponse,
 } = require("../agents/chatAgent");
+const { summarizeForAudio } = require("../tools");
 
 async function sendAudioResponse(res, answer, question, detectedLanguage) {
-    const audioPath = await textToSpeech(answer, detectedLanguage);
+    const audioPath = await textToSpeech(summarizeForAudio(answer), detectedLanguage);
 
     res.setHeader("X-Transcript", encodeURIComponent(question));
     res.setHeader("X-Answer", encodeURIComponent(answer));
