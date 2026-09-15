@@ -290,6 +290,11 @@ async function routeChatRequest({ question, actor }) {
     /(?:\b[A-Z]{2,}\d{2,}\b.*\b(?:designation|status|role|email|department|name|isactive)\b)|(?:\b(?:designation|status|role|email|department|name|isactive)\b.*\b[A-Z]{2,}\d{2,}\b)/i.test(text) ||
     (hasPendingUpdateFields && /(?:role|email|designation|department|name|status|active|inactive|isactive|employee|user)/i.test(lower));
 
+  const dataQuery = parseDataQueryAction(text);
+  if (dataQuery) {
+    return dataQuery;
+  }
+
   if (isApproveLeave) {
     return leaveTools.approveLeaveRequest({
       actor,
