@@ -85,18 +85,19 @@ function Dashboard() {
     : 0;
 
   return (
-    <div>
+    <div className="page-enter max-w-[1600px] mx-auto">
       {/* Heading */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-5 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-600 mb-2">Overview</p>
+          <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
             Dashboard
           </h1>
-          <p className="text-gray-500 mt-2">
-            Welcome back, {user?.name || "User"} 👋
+          <p className="text-slate-500 mt-2">
+            Welcome back, {user?.name || "User"}. Here is today at a glance.
           </p>
         </div>
-        <button className="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition">
+        <button className="bg-slate-900 text-white px-5 py-3 rounded-xl font-semibold shadow-lg shadow-slate-900/15 hover:-translate-y-0.5 hover:bg-blue-700 transition">
           Generate Report
         </button>
       </div>
@@ -146,7 +147,7 @@ function Dashboard() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 mt-8 p-6">
+      <div className="bg-white/90 rounded-2xl shadow-[0_12px_30px_rgba(15,23,42,0.06)] border border-white mt-8 p-6 lg:p-7">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-800">
             Recent Leave Applications

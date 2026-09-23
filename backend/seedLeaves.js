@@ -18,8 +18,8 @@ async function seedPendingLeaves() {
     const pendingLeaves = [
       {
         user: users[0]._id,
-        from: new Date("2026-09-10T00:00:00.000Z"),
-        to: new Date("2026-09-12T00:00:00.000Z"),
+        from: new Date("2026-10-10T00:00:00.000Z"),
+        to: new Date("2026-10-12T00:00:00.000Z"),
         type: "Casual",
         reason: "Family function",
         status: "Pending",
@@ -34,16 +34,16 @@ async function seedPendingLeaves() {
       },
       {
         user: users[2]._id,
-        from: new Date("2026-09-18T00:00:00.000Z"),
-        to: new Date("2026-09-20T00:00:00.000Z"),
+        from: new Date("2026-10-18T00:00:00.000Z"),
+        to: new Date("2026-10-20T00:00:00.000Z"),
         type: "Annual",
         reason: "Vacation",
         status: "Pending",
       },
       {
         user: users[3]._id,
-        from: new Date("2026-09-22T00:00:00.000Z"),
-        to: new Date("2026-09-23T00:00:00.000Z"),
+        from: new Date("2026-10-22T00:00:00.000Z"),
+        to: new Date("2026-10-23T00:00:00.000Z"),
         type: "Personal",
         reason: "Home visit",
         status: "Pending",

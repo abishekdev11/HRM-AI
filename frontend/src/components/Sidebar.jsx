@@ -61,16 +61,16 @@ const handleLogout = async () => {
 };
 
   return (
-    <aside className="w-64 bg-slate-800 text-white flex flex-col">
+    <aside className="app-sidebar w-64 text-white flex flex-col">
 
       {/* Logo */}
-     <div className="p-6 border-b border-slate-700">
+     <div className="sidebar-brand p-6 border-b border-white/10">
 
-    <h1 className="text-2xl font-bold">
+    <h1 className="relative text-2xl font-bold tracking-tight">
         CompanyHub
     </h1>
 
-    <p className="text-sm text-slate-400 mt-1">
+    <p className="relative text-sm text-sky-100/60 mt-1">
         Management System
     </p>
 
@@ -83,10 +83,10 @@ const handleLogout = async () => {
             key={item.name}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-6 py-3 transition ${
+              `nav-item flex items-center gap-3 px-4 py-3 transition ${
                 isActive
-                  ? "bg-blue-600"
-                  : "hover:bg-slate-700"
+                  ? "nav-item-active"
+                  : "text-slate-300 hover:bg-white/10 hover:text-white"
               }`
             }
           >
@@ -99,7 +99,7 @@ const handleLogout = async () => {
       {/* Logout */}
      <button
     onClick={handleLogout}
-    className="flex items-center gap-3 p-6 hover:bg-slate-700 text-left w-full"
+    className="flex items-center gap-3 p-6 text-slate-300 hover:bg-white/10 hover:text-white text-left w-full"
 >
     <FaSignOutAlt />
     Logout

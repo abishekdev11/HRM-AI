@@ -4,7 +4,7 @@ import Topbar from "../components/Topbar";
 
 function MainLayout() {
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="app-shell flex h-screen">
 
       <Sidebar />
 
@@ -12,7 +12,7 @@ function MainLayout() {
 
         <Topbar />
 
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
           <Outlet />
         </main>
 

@@ -16,10 +16,10 @@ function hasPendingAction(actor, actionName) {
 
 function extractLeaveIdentifier(question) {
   const patterns = [
-    /\b(?:leave|request)\s*(?:id|number)?\s*(?:is|:|=|to)?\s*([A-Za-z0-9-]+)/i,
+    /\b(?:leave|request)\s+(?:id|number)\s*(?:is|:|=|to)?\s*([A-Za-z0-9-]+)/i,
     /\b(?:employee|user)\s*(?:id|number)?\s*(?:is|:|=|to)?\s*([A-Za-z0-9-]+)/i,
-    /\b(?:for|by|from)\s+([A-Z][A-Za-z' .-]+|[a-z][A-Za-z' .-]+)/i,
     /\b([A-Fa-f0-9]{24})\b/,
+    /\b(?:for|by|from)\s+(.+?)(?=\s+(?:leave|leave request|request)\b|$)/i,
   ];
 
   for (const pattern of patterns) {
@@ -278,10 +278,12 @@ async function routeChatRequest({ question, actor }) {
   const pendingUpdateDraft = getPendingDraftFor(actor, "user.update");
   const hasPendingUpdateFields = !!pendingUpdateDraft && Object.keys(pendingUpdateDraft.fields || {}).length > 0;
 
-  const isApproveLeave = /\b(approve|approved|accept|accepting|grant)\b.*\b(leave|leave request|request)\b|\b(leave|leave request|request)\b.*\b(approve|accept|grant)\b/i.test(lower) ||
-    (hasPendingAction(actor, "leave.approve") && /(?:leave|employee|user|email|id|approve|accept|grant)/i.test(lower));
-  const isRejectLeave = /\b(reject|rejected|deny|decline|declined)\b.*\b(leave|leave request|request)\b|\b(leave|leave request|request)\b.*\b(reject|deny|decline)\b/i.test(lower) ||
-    (hasPendingAction(actor, "leave.reject") && /(?:leave|employee|user|email|id|reject|deny|decline)/i.test(lower));
+  const hasExplicitApproveLeave = /\b(approve|approved|accept|accepting|grant)\b.*\b(leave|leave request|request)\b|\b(leave|leave request|request)\b.*\b(approve|accept|grant)\b/i.test(lower);
+  const hasExplicitRejectLeave = /\b(reject|rejected|deny|decline|declined)\b.*\b(leave|leave request|request)\b|\b(leave|leave request|request)\b.*\b(reject|deny|decline)\b/i.test(lower);
+  const isApproveLeave = hasExplicitApproveLeave ||
+    (!hasExplicitRejectLeave && hasPendingAction(actor, "leave.approve") && /(?:leave|employee|user|email|id|approve|accept|grant)/i.test(lower));
+  const isRejectLeave = hasExplicitRejectLeave ||
+    (!hasExplicitApproveLeave && hasPendingAction(actor, "leave.reject") && /(?:leave|employee|user|email|id|reject|deny|decline)/i.test(lower));
   const isCreateUser = /\b(create|add|new|register)\b.*\b(user|employee)\b|\b(new\s+employee|add\s+employee|create\s+new\s+employee|register\s+new\s+employee)\b/i.test(lower) ||
     (hasPendingCreateFields && /(?:name|empid|employee\s*id|email|e-mail|department|designation|role|password)\b/i.test(text));
   const isUpdateUser =

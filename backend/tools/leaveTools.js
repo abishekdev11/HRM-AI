@@ -67,6 +67,16 @@ function canUpdateLeaveStatus(currentStatus, nextStatus) {
   return !!current && !!next && current !== "Approved" && current !== "Rejected";
 }
 
+function getTodayStart() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+function isCurrentLeave(leave) {
+  return !!leave && leave.to >= getTodayStart();
+}
+
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -90,27 +100,29 @@ async function findLeaveByIdentifier(identifier) {
 
   if (/^[0-9a-fA-F]{24}$/.test(cleanIdentifier)) {
     const leave = await Leave.findById(cleanIdentifier).populate("user", "name employeeId email");
-    if (leave) return leave;
+    return isCurrentLeave(leave) ? leave : null;
   }
 
   const user = await User.findOne({
     $or: [
-      { employeeId: new RegExp(cleanIdentifier, "i") },
-      { email: new RegExp(cleanIdentifier, "i") },
-      { name: new RegExp(cleanIdentifier, "i") },
+      { employeeId: cleanIdentifier.toUpperCase() },
+      { email: cleanIdentifier.toLowerCase() },
+      { name: { $regex: `^${escapeRegex(cleanIdentifier)}$`, $options: "i" } },
     ],
   });
 
   if (user) {
-    return Leave.findOne({ user: user._id }).sort({ createdAt: -1 }).populate("user", "name employeeId email");
+    return Leave.findOne({
+      user: user._id,
+      to: { $gte: getTodayStart() },
+    }).sort({ from: -1, createdAt: -1 }).populate("user", "name employeeId email");
   }
 
-  return Leave.findOne({
-    $or: [
-      { reason: new RegExp(cleanIdentifier, "i") },
-      { type: new RegExp(cleanIdentifier, "i") },
-    ],
-  }).populate("user", "name employeeId email");
+  return null;
+}
+
+function noCurrentLeaveMessage(identifier) {
+  return `No current pending leave request found for ${identifier}. The request may be expired, already processed, or the employee name, ID, or email may be incorrect.`;
 }
 
 async function approveLeaveRequest({ actor, leaveIdentifier }) {
@@ -157,7 +169,7 @@ async function approveLeaveRequest({ actor, leaveIdentifier }) {
   if (!leave) {
     return buildActionResult({
       success: false,
-      message: "Could not find that leave request. Please provide one of the following:\n• Employee name: 'approve leave for John'\n• Employee ID: 'approve leave for EMP001'\n• Email: 'approve leave for john@gmail.com'\n\nExample: 'approve leave for John Doe'",
+      message: noCurrentLeaveMessage(mergedLeaveIdentifier),
       operation: "leave.approve",
       entityType: "leave",
     });
@@ -240,7 +252,7 @@ async function rejectLeaveRequest({ actor, leaveIdentifier }) {
   if (!leave) {
     return buildActionResult({
       success: false,
-      message: "Could not find that leave request. Please provide one of the following:\n• Employee name: 'reject leave for John'\n• Employee ID: 'reject leave for EMP001'\n• Email: 'reject leave for john@gmail.com'\n\nExample: 'reject leave for John Doe'",
+      message: noCurrentLeaveMessage(mergedLeaveIdentifier),
       operation: "leave.reject",
       entityType: "leave",
     });
@@ -291,7 +303,7 @@ async function executeLeaveAction(action) {
     });
   }
 
-  if (!user) {
+  if (!user && target.length >= 3) {
     const nameCandidates = await User.find({}, { name: 1 }).lean();
     const closestMatch = findClosestUserNameMatch(target, nameCandidates);
     if (closestMatch) user = await User.findById(closestMatch._id);
@@ -299,8 +311,11 @@ async function executeLeaveAction(action) {
 
   if (!user) return "No employee found.";
 
-  const leave = await Leave.findOne({ user: user._id }).sort({ createdAt: -1 });
-  if (!leave) return `No leave found for ${user.name}.`;
+  const leave = await Leave.findOne({
+    user: user._id,
+    to: { $gte: getTodayStart() },
+  }).sort({ from: -1, createdAt: -1 });
+  if (!leave) return `No current pending leave request found for ${user.name}. The request may be expired or already processed.`;
 
   if (!canUpdateLeaveStatus(leave.status, action.decision)) {
     return `Leave for ${user.name} is already ${leave.status.toLowerCase()}. It cannot be changed again.`;
