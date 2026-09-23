@@ -11,7 +11,11 @@ function Leave() {
     setLoading(true);
     try {
       const res = await getLeaves();
-      setLeaves(res.data || []);
+      const requests = res.data || [];
+      setLeaves([
+        ...requests.filter((leave) => leave.status === 'Pending'),
+        ...requests.filter((leave) => leave.status !== 'Pending'),
+      ]);
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
