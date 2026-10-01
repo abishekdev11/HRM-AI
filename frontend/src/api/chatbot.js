@@ -125,6 +125,30 @@ export async function deleteUser(id) {
   return response.data;
 }
 
+// ----------------------------
+// Project APIs
+// ----------------------------
+
+export async function getProjects() {
+  const response = await API.get("/api/projects");
+  return response.data;
+}
+
+export async function createProject(projectData) {
+  const response = await API.post("/api/projects", projectData);
+  return response.data;
+}
+
+export async function updateProject(id, projectData) {
+  const response = await API.put(`/api/projects/${id}`, projectData);
+  return response.data;
+}
+
+export async function deleteProject(id) {
+  const response = await API.delete(`/api/projects/${id}`);
+  return response.data;
+}
+
 export async function updateUserStatus(id, isActive) {
   const response = await API.patch(
     `/api/users/${id}/status`,
@@ -177,6 +201,11 @@ export const getAttendanceSummary = async () => {
   return response.data;
 };
 
+export const getDashboardDetails = async () => {
+  const response = await API.get("/api/attendance/dashboard-details");
+  return response.data;
+};
+
 export async function checkInAttendance() {
   const response = await API.post(
     "/api/attendance/checkin",
@@ -192,6 +221,21 @@ export async function getMyAttendance() {
 
 export const getTodayAttendance = async () => {
   const response = await API.get("/api/attendance/today");
+  return response.data;
+};
+
+export const getWorkProgress = async () => {
+  const response = await API.get("/api/attendance/progress");
+  return response.data;
+};
+
+export const startWorkBreak = async (reason) => {
+  const response = await API.post("/api/attendance/break/start", { reason });
+  return response.data;
+};
+
+export const endWorkBreak = async () => {
+  const response = await API.post("/api/attendance/break/end");
   return response.data;
 };
 
@@ -225,6 +269,35 @@ export async function rejectLeave(id) {
     `/api/leave/${id}/reject`,
     {}
   );
+  return response.data;
+}
+
+// ----------------------------
+// Queries / Private Messages
+// ----------------------------
+
+export async function getQueryRecipients() {
+  const response = await API.get("/api/queries/recipients");
+  return response.data;
+}
+
+export async function getQueries() {
+  const response = await API.get("/api/queries");
+  return response.data;
+}
+
+export async function createQuery(queryData) {
+  const response = await API.post("/api/queries", queryData);
+  return response.data;
+}
+
+export async function getQueryMessages(queryId) {
+  const response = await API.get(`/api/queries/${queryId}/messages`);
+  return response.data;
+}
+
+export async function sendQueryMessage(queryId, body) {
+  const response = await API.post(`/api/queries/${queryId}/messages`, { body });
   return response.data;
 }
 

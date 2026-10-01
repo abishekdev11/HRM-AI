@@ -4,9 +4,12 @@ import {
     FaUsers,
     FaCalendarCheck,
     FaUmbrellaBeach,
-    FaRobot
+  FaRobot,
+  FaTimes
 } from "react-icons/fa";
-import { getAttendanceSummary, getLeaves } from "../api/chatbot";
+import { getAttendanceSummary, getDashboardDetails, getLeaves } from "../api/chatbot";
+
+const formatDate = (value) => value ? new Date(value).toLocaleDateString() : "Date unavailable";
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -19,6 +22,10 @@ function Dashboard() {
   });
   const [leaves, setLeaves] = useState([]);
   const [error, setError] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [dashboardDetails, setDashboardDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState(null);
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -84,6 +91,43 @@ function Dashboard() {
     ? Math.round((summary.presentCount / summary.totalEmployees) * 100)
     : 0;
 
+  const cards = [
+    { id: "employees", title: "Total Employees", value: summary?.totalEmployees || "0", icon: <FaUsers size={24} />, color: "bg-blue-600", dataKey: "employees", kind: "employee" },
+    { id: "present", title: "Present Today", value: summary?.presentCount || "0", icon: <FaCalendarCheck size={24} />, color: "bg-green-600", dataKey: "present", kind: "attendance" },
+    { id: "leave", title: "Leave", value: summary?.approvedLeaveCount || "0", icon: <FaUmbrellaBeach size={24} />, color: "bg-yellow-500", dataKey: "onLeave", kind: "leave" },
+    { id: "absent", title: "Absent Today", value: summary?.absentCount || "0", icon: <FaRobot size={24} />, color: "bg-purple-600", dataKey: "absent", kind: "employee" },
+    { id: "pending", title: "Pending Leaves", value: summary?.pendingLeaves || "0", icon: <FaUmbrellaBeach size={24} />, color: "bg-orange-500", dataKey: "pendingLeaveRequests", kind: "leave" },
+  ];
+
+  const openCardDetails = async (card) => {
+    setSelectedCard(card);
+    setDetailsLoading(true);
+    setDetailsError(null);
+    try {
+      const response = await getDashboardDetails();
+      if (!response?.success || !response.data) {
+        throw new Error("Dashboard details were unavailable.");
+      }
+      setDashboardDetails(response.data);
+      setSummary({
+        totalEmployees: response.data.totalEmployees,
+        presentCount: response.data.presentCount,
+        approvedLeaveCount: response.data.approvedLeaveCount,
+        absentCount: response.data.absentCount,
+        pendingLeaves: response.data.pendingLeaves,
+      });
+    } catch (detailsFetchError) {
+      console.error("Error fetching dashboard details:", detailsFetchError);
+      setDetailsError("Could not load current records. Please try again.");
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const detailItems = selectedCard && dashboardDetails
+    ? dashboardDetails[selectedCard.dataKey] || []
+    : [];
+
   return (
     <div className="page-enter max-w-[1600px] mx-auto">
       {/* Heading */}
@@ -110,41 +154,76 @@ function Dashboard() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
-        <StatCard
-          title="Total Employees"
-          value={summary?.totalEmployees || "0"}
-          icon={<FaUsers size={24} />}
-          color="bg-blue-600"
-        />
-
-        <StatCard
-          title="Present Today"
-          value={summary?.presentCount || "0"}
-          icon={<FaCalendarCheck size={24} />}
-          color="bg-green-600"
-        />
-
-        <StatCard
-          title="Leave"
-          value={summary?.approvedLeaveCount || "0"}
-          icon={<FaUmbrellaBeach size={24} />}
-          color="bg-yellow-500"
-        />
-
-        <StatCard
-          title="Absent Today"
-          value={summary?.absentCount || "0"}
-          icon={<FaRobot size={24} />}
-          color="bg-purple-600"
-        />
-
-        <StatCard
-          title="Pending Leaves"
-          value={summary?.pendingLeaves || "0"}
-          icon={<FaUmbrellaBeach size={24} />}
-          color="bg-orange-500"
-        />
+        {cards.map((card) => (
+          <StatCard
+            key={card.id}
+            title={card.title}
+            value={card.value}
+            icon={card.icon}
+            color={card.color}
+            onClick={() => openCardDetails(card)}
+            expanded={selectedCard?.id === card.id}
+            detailsId="dashboard-card-details"
+          />
+        ))}
       </div>
+
+      {selectedCard && (
+        <section
+          id="dashboard-card-details"
+          aria-live="polite"
+          className="bg-white/90 rounded-2xl border border-slate-200 mt-6 p-5 lg:p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]"
+        >
+          <div className="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900">{selectedCard.title}</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                {detailsLoading ? "Refreshing current records..." : `${detailItems.length} records`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedCard(null)}
+              aria-label="Close dashboard details"
+              className="p-2 text-slate-500 hover:text-slate-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+            >
+              <FaTimes />
+            </button>
+          </div>
+
+          {detailsError && <p role="alert" className="text-red-700 py-4">{detailsError}</p>}
+          {detailsLoading && <p className="text-slate-500 py-4">Loading records...</p>}
+          {!detailsLoading && !detailsError && detailItems.length === 0 && (
+            <p className="text-slate-500 py-4">No records found.</p>
+          )}
+          {!detailsLoading && !detailsError && detailItems.length > 0 && (
+            <ul className="divide-y divide-slate-100">
+              {detailItems.map((item) => {
+                const person = item.user || item;
+                const description = selectedCard.kind === "employee"
+                  ? [person.designation, person.department?.name].filter(Boolean).join(" · ")
+                  : selectedCard.kind === "attendance"
+                    ? `${item.status || "Present"} · Checked in ${item.loginTime ? new Date(item.loginTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "time unavailable"}`
+                    : `${item.type || "Leave"} · ${formatDate(item.from)} to ${formatDate(item.to)}`;
+
+                return (
+                  <li key={item._id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 py-3">
+                    <div>
+                      <p className="font-medium text-slate-800">{person.name || "Employee"}</p>
+                      <p className="text-sm text-slate-500">
+                        {[person.employeeId, description].filter(Boolean).join(" · ")}
+                      </p>
+                    </div>
+                    {item.status && selectedCard.kind === "leave" && (
+                      <span className="text-sm font-medium text-slate-600">{item.status}</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
 
       {/* Recent Activity */}
       <div className="bg-white/90 rounded-2xl shadow-[0_12px_30px_rgba(15,23,42,0.06)] border border-white mt-8 p-6 lg:p-7">

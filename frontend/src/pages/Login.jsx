@@ -1,19 +1,40 @@
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/chatbot";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FaEye, FaEyeSlash, FaBuilding } from "react-icons/fa";
 
 function Login() {
 
     const [employeeId, setEmployeeId] = useState("");
     const [password, setPassword] = useState("");
+    const employeeIdInputRef = useRef(null);
+    const passwordInputRef = useRef(null);
+    const [employeeIdError, setEmployeeIdError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [inactiveWarning, setInactiveWarning] = useState("");
 
-    const handleLogin = async () => {
+    const handleLogin = async (event) => {
+
+    event.preventDefault();
+
+    const missingEmployeeId = !employeeId.trim();
+    const missingPassword = !password;
+
+    setEmployeeIdError(missingEmployeeId ? "Employee ID is mandatory" : "");
+    setPasswordError(missingPassword ? "Password is mandatory" : "");
+
+    if (missingEmployeeId || missingPassword) {
+        if (missingEmployeeId) {
+            employeeIdInputRef.current?.focus();
+        } else {
+            passwordInputRef.current?.focus();
+        }
+        return;
+    }
 
     try {
 
@@ -44,7 +65,8 @@ function Login() {
 
         );
 
-        navigate("/dashboard");
+        const canViewDashboard = ["admin", "manager"].includes(response.user?.role);
+        navigate(canViewDashboard ? "/dashboard" : "/projects");
 
     }
 
@@ -121,6 +143,8 @@ function Login() {
 
                     </p>
 
+                    <form onSubmit={handleLogin}>
+
                     {/* EmployeeId */}
 
                     <div className="mb-5">
@@ -135,19 +159,46 @@ function Login() {
 
                             type="text"
 
+                            autoFocus
+
+                            ref={employeeIdInputRef}
+
                             value={employeeId}
 
-                            onChange={(e) =>
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    if (!employeeId.trim()) {
+                                        setEmployeeIdError("Employee ID is mandatory");
+                                        return;
+                                    }
+                                    setEmployeeIdError("");
+                                    passwordInputRef.current?.focus();
+                                }
+                            }}
 
-                                setEmployeeId(e.target.value)
+                            onChange={(e) => {
+                                setEmployeeId(e.target.value.toUpperCase())
+                                if (e.target.value.trim()) {
+                                    setEmployeeIdError("");
+                                }
+                            }}
 
-                            }
+                            aria-invalid={Boolean(employeeIdError)}
+
+                            aria-describedby={employeeIdError ? "employee-id-error" : undefined}
 
                             placeholder="Enter your Employee Id"
 
                             className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
 
                         />
+
+                        {employeeIdError && (
+                            <p id="employee-id-error" className="text-red-600 text-sm mt-2">
+                                {employeeIdError}
+                            </p>
+                        )}
 
                     </div>
 
@@ -167,13 +218,20 @@ function Login() {
 
                                 type={showPassword ? "text" : "password"}
 
+                                ref={passwordInputRef}
+
                                 value={password}
 
-                                onChange={(e) =>
-
+                                onChange={(e) => {
                                     setPassword(e.target.value)
+                                    if (e.target.value) {
+                                        setPasswordError("");
+                                    }
+                                }}
 
-                                }
+                                aria-invalid={Boolean(passwordError)}
+
+                                aria-describedby={passwordError ? "password-error" : undefined}
 
                                 placeholder="Enter your password"
 
@@ -209,6 +267,12 @@ function Login() {
 
                         </div>
 
+                        {passwordError && (
+                            <p id="password-error" className="text-red-600 text-sm mt-2">
+                                {passwordError}
+                            </p>
+                        )}
+
                     </div>
 
                     {error && (
@@ -231,7 +295,7 @@ function Login() {
 
                 <button
 
-    onClick={handleLogin}
+    type="submit"
 
     disabled={loading}
 
@@ -250,6 +314,8 @@ function Login() {
     }
 
 </button>
+
+                    </form>
                 </div>
 
             </div>

@@ -1,6 +1,12 @@
-function StatCard({ title, value, icon, color }) {
+function StatCard({ title, value, icon, color, onClick, expanded, detailsId }) {
   return (
-    <div className="stagger-in group bg-white/90 rounded-2xl border border-white shadow-[0_12px_30px_rgba(15,23,42,0.06)] p-6 hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(15,23,42,0.12)] transition duration-300">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={expanded}
+      aria-controls={detailsId}
+      className="stagger-in group w-full text-left bg-white/90 rounded-2xl border border-white shadow-[0_12px_30px_rgba(15,23,42,0.06)] p-6 hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(15,23,42,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 transition duration-300"
+    >
 
       <div className="flex justify-between items-center">
 
@@ -22,7 +28,7 @@ function StatCard({ title, value, icon, color }) {
 
       </div>
 
-    </div>
+    </button>
   );
 }
 

@@ -120,3 +120,106 @@ button, a, input {
     background: linear-gradient(135deg, #f5f7fb 0%, #edf3f9 45%, #ebf2f4 100%);
   }
 }
+
+.project-card {
+  min-height: 22rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.project-card:hover,
+.project-card:focus-visible {
+  border-color: rgba(20, 184, 166, 0.45);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+  outline: none;
+  transform: translateY(-4px);
+}
+
+.project-progress-circle {
+  width: 10rem;
+  height: 10rem;
+  padding: 0.7rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+
+.project-progress-circle-small {
+  width: 7.5rem;
+  height: 7.5rem;
+  padding: 0.55rem;
+}
+
+.project-progress-circle-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-progress-circle-inner strong {
+  color: #0f172a;
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.project-progress-circle-small .project-progress-circle-inner strong {
+  font-size: 1.35rem;
+}
+
+.project-progress-circle-inner span {
+  color: #64748b;
+  font-size: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.project-detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: #0f766e;
+}
+
+.project-detail-item > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.project-detail-item span {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.project-detail-item strong {
+  color: #334155;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.project-client-link {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.project-client-link:hover,
+.project-client-link:focus-visible {
+  color: #0f766e;
+  text-decoration: underline;
+  outline: none;
+}

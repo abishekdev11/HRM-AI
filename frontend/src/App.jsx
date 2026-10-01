@@ -9,6 +9,8 @@ import UserManagement from "./pages/UserManagement";
 import DepartmentManagement from "./pages/DepartmentManagement";
 import Attendance from "./pages/Attendance";
 import Leave from "./pages/Leave";
+import Projects from "./pages/Projects";
+import Queries from "./pages/Queries";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -32,6 +34,8 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/ai-assistant" element={<AIAssistant />} />
+        <Route path="/queries" element={<Queries />} />
+        <Route path="/projects" element={<Projects />} />
         <Route path="/attendance" element={
           <ProtectedRoute roles={["admin","manager"]}>
             <Attendance />

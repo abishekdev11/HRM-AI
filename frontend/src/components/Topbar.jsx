@@ -1,5 +1,6 @@
 import { FaBell, FaSearch } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import WorkProgress from "./WorkProgress";
 
 function Topbar() {
   const [user, setUser] = useState(null);
@@ -7,16 +8,23 @@ function Topbar() {
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
-      setUser(JSON.parse(userData));
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
     }
   }, []);
 
   const userName = user?.name || "User";
   const userRole = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
   const initials = userName.split(" ").map(n => n[0]).join("").toUpperCase() || "U";
+  const showWorkProgress = user && user.role !== "admin" && user.role !== "manager";
 
   return (
-    <header className="topbar h-20 border-b border-slate-200/80 flex items-center justify-between px-6 lg:px-8 sticky top-0 z-10">
+    <header className="topbar border-b border-slate-200/80 sticky top-0 z-10">
+
+      <div className="h-20 flex items-center justify-between gap-4 px-6 lg:px-8">
 
       {/* Search */}
       <div className="relative w-full max-w-md">
@@ -67,6 +75,10 @@ function Topbar() {
         </div>
 
       </div>
+
+      </div>
+
+      {showWorkProgress && <WorkProgress />}
 
     </header>
   );

@@ -11,6 +11,8 @@ import {
   FaRobot,
   FaCog,
   FaSitemap,
+  FaProjectDiagram,
+  FaEnvelope,
   FaSignOutAlt,
 } from "react-icons/fa";
 
@@ -29,6 +31,8 @@ function Sidebar() {
 
   const menuItems = [
     ...(isAdminOrManager ? [{ name: "Dashboard", icon: <FaChartPie />, path: "/dashboard" }] : []),
+    { name: "Projects", icon: <FaProjectDiagram />, path: "/projects" },
+    { name: "Queries", icon: <FaEnvelope />, path: "/queries" },
     ...(isAdminOrManager ? [{ name: "Employees", icon: <FaUsers />, path: "/users" }] : []),
     ...(isAdminOrManager ? [{ name: "Departments", icon: <FaSitemap />, path: "/departments" }] : []),
     ...(isAdminOrManager ? [{ name: "Attendance", icon: <FaCalendarCheck />, path: "/attendance" }] : []),
