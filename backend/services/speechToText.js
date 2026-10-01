@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const fs = require("fs");
 const FormData = require("form-data");
-const STT_URL = process.env.STT_URL
+const STT_URL = `${process.env.STT_URL.replace(/\/$/, "")}/transcribe`;
 async function speechToText(audioPath) {
     try {
         const form = new FormData();
