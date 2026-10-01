@@ -423,8 +423,10 @@ async function updateUserFromPrompt({ actor, question, userIdentifier }) {
   });
 }
 
-async function executeUserAction(action) {
+async function executeUserAction(action, actor) {
   if (!action || (action.type !== "employeeIdUpdate" && action.type !== "statusUpdate")) return null;
+  if (!actor) return "You must be logged in to update employees.";
+  if (actor.role !== "admin") return "Only admins can update employee IDs or status.";
 
   const identifier = action.employeeId || action.currentEmployeeId;
   let user = await User.findOne({ employeeId: identifier });
@@ -460,6 +462,16 @@ async function executeUserAction(action) {
     : `Employee ${user.employeeId} status updated to ${action.isActive ? "active" : "inactive"}.`;
 }
 
+async function deleteUserFromPrompt({ actor, identifier }) {
+  if (!actor) return "You must be logged in to delete users.";
+  if (actor.role !== "admin") return "Only admins can delete users.";
+  const user = await findUserByIdentifier(identifier);
+  if (!user) return "No employee matched that name, employee ID, or email.";
+  if (String(user._id) === String(actor._id)) return "You cannot delete your own account.";
+  await User.deleteOne({ _id: user._id });
+  return `User ${user.name} (${user.employeeId}) was deleted.`;
+}
+
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -470,4 +482,5 @@ module.exports = {
   updateUserFromPrompt,
   getChangedUserUpdates,
   executeUserAction,
+  deleteUserFromPrompt,
 };

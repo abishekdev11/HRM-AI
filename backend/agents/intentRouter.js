@@ -156,6 +156,15 @@ function parseDataQueryAction(question) {
   const showPrefix = /(show|list|get|display)\s+(me\s+)?(all\s+the\s+|all\s+|every\s+)?/i;
   const listPrefix = /(list|show|get|display)\s+(the\s+)?/i;
 
+  if ((showPrefix.test(lower) || listPrefix.test(lower)) && /\b(my\s+)?profile\b/.test(lower)) {
+    return { type: 'dataQuery', entity: 'user' };
+  }
+
+  const userDetails = normalized.match(/\b(?:show|get|find)\s+(?:the\s+)?(?:user|employee)\s+(?:details?\s+)?(?:for|of)?\s*([A-Za-z0-9@._+-]+(?:\s+[A-Za-z][A-Za-z' .-]*)?)/i);
+  if (userDetails) {
+    return { type: 'dataQuery', entity: 'user', identifier: cleanParsedValue(userDetails[1]) };
+  }
+
   if ((showPrefix.test(lower) || listPrefix.test(lower)) && /\bactive\b/.test(lower) && /\b(users?|employees?)\b/.test(lower)) {
     return { type: 'dataQuery', entity: 'user', isActive: true };
   }
@@ -193,6 +202,78 @@ function parseDataQueryAction(question) {
   if ((showPrefix.test(lower) || listPrefix.test(lower)) && /\bdepartments?\b/.test(lower)) {
     return { type: 'dataQuery', entity: 'department' };
   }
+
+    const clientDetails = normalized.match(/\b(?:client|customer)\s+details?\s+(?:for|of)\s+(?:the\s+)?(?:project\s+)?(.+?)\s*[?.!]*$/i)
+      || normalized.match(/^(?:show|get|find|display)\s+(?:me\s+)?(?:the\s+)?(.+?)\s+(?:project\s+)?(?:client|customer)\s+details?\s*[?.!]*$/i);
+    if (clientDetails) {
+      return {
+        type: 'dataQuery',
+        entity: 'client',
+        identifier: cleanParsedValue(clientDetails[1]).replace(/^project\s+/i, ''),
+      };
+    }
+
+    const projectTeamLead = normalized.match(/\bteam\s+lead\s+(?:of|for)\s+(?:the\s+)?(.+?)\s*[?.!]*$/i);
+    if (projectTeamLead) {
+      return {
+        type: 'dataQuery',
+        entity: 'project',
+        scope: 'teamLead',
+        identifier: cleanParsedValue(projectTeamLead[1]).replace(/\s+project$/i, ''),
+      };
+    }
+
+    const assignedProjectEmployees = normalized.match(/\bemployees?\s+(?:assigned|allocated)\s+(?:to|on)\s+(?:the\s+)?(.+?)\s*[?.!]*$/i);
+    if (assignedProjectEmployees) {
+      return {
+        type: 'dataQuery',
+        entity: 'project',
+        scope: 'employees',
+        identifier: cleanParsedValue(assignedProjectEmployees[1]).replace(/\s+project$/i, ''),
+      };
+    }
+
+    if ((showPrefix.test(lower) || listPrefix.test(lower)) && /\b(attendance|dashboard)\b/.test(lower)) {
+      if (/\b(dashboard|summary|overview|counts?)\b/.test(lower)) {
+        return { type: 'dataQuery', entity: 'dashboard', scope: /\b(detail|details|full|breakdown)\b/.test(lower) ? 'details' : 'summary' };
+      }
+      return {
+        type: 'dataQuery',
+        entity: 'attendance',
+        scope: /\bmy\b/.test(lower)
+          ? (/\btoday\b/.test(lower) ? 'todayMine' : 'me')
+          : (/\b(today|team|everyone|all employees)\b/.test(lower) ? 'today' : 'me'),
+      };
+    }
+
+    if ((showPrefix.test(lower) || listPrefix.test(lower)) && /\bprojects?\b/.test(lower)) {
+      const status = ['active', 'completed', 'on hold'].find((value) => lower.includes(value));
+      const identifier = normalized.match(/\bproject\s+(?:named\s+)?(.+?)\s*$/i)?.[1];
+      return {
+        type: 'dataQuery',
+        entity: 'project',
+        ...(status ? { status: status.replace(/\b\w/g, (letter) => letter.toUpperCase()) } : {}),
+        ...(identifier && !['all', 'active', 'completed', 'on hold'].includes(identifier.toLowerCase()) ? { identifier } : {}),
+      };
+    }
+
+    if ((showPrefix.test(lower) || listPrefix.test(lower)) && /\bclients?\b/.test(lower)) {
+      return { type: 'dataQuery', entity: 'client' };
+    }
+
+    if ((showPrefix.test(lower) || listPrefix.test(lower)) && /\b(my\s+)?(employee\s+)?queries\b/.test(lower)) {
+      const queryId = normalized.match(/\b(?:query|conversation)\s+(?:id\s+)?([a-f0-9]{24})\b/i)?.[1];
+      return { type: 'dataQuery', entity: 'query', ...(queryId ? { queryIdentifier: queryId } : {}) };
+    }
+
+    if ((showPrefix.test(lower) || listPrefix.test(lower)) && /\b(recipients|people i can message|people i can contact)\b/.test(lower)) {
+      return { type: 'dataQuery', entity: 'query', scope: 'recipients' };
+    }
+
+    const queryMessages = normalized.match(/\b(?:show|read|get|open)\s+(?:the\s+)?messages?\s+(?:for|in|from)\s+(?:query\s+)?([a-f0-9]{24})\b/i);
+    if (queryMessages) {
+      return { type: 'dataQuery', entity: 'query', queryIdentifier: queryMessages[1] };
+    }
 
   if ((showPrefix.test(lower) || listPrefix.test(lower)) && /\badmins?\b/.test(lower)) {
     return { type: 'dataQuery', entity: 'user', role: 'admin' };
@@ -238,6 +319,22 @@ function parseLeaveDecisionAction(question) {
 }
 
 function parseAction(question) {
+  const normalized = String(question || "").trim();
+  const attendanceAction = normalized.match(/\b(start|begin)\s+(?:a\s+)?(?:(coffee|lunch|tea|smoke|personal)\s+)?break\b(?:\s+(?:for|called|type)\s+(.+))?/i);
+  if (attendanceAction) {
+    return { type: 'attendanceAction', operation: 'startBreak', reason: cleanParsedValue(attendanceAction[2] || attendanceAction[3] || 'Break') };
+  }
+  if (/\b(end|finish|stop)\s+(?:my\s+)?break\b/i.test(normalized)) {
+    return { type: 'attendanceAction', operation: 'endBreak' };
+  }
+  if (/\b(work\s+)?progress\b/i.test(normalized) && /\b(my|today|attendance|work)\b/i.test(normalized)) {
+    return { type: 'attendanceAction', operation: 'progress' };
+  }
+  const deleteUserMatch = normalized.match(/\b(?:delete|remove)\s+(?:the\s+)?(?:user|employee)\s+(.+)$/i);
+  if (deleteUserMatch) {
+    return { type: 'userDelete', identifier: cleanParsedValue(deleteUserMatch[1]) };
+  }
+
   return parseEmployeeStatusAction(question)
     || parseEmployeeIdUpdateAction(question)
     || parseLeaveDecisionAction(question)

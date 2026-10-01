@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "index": "node indexData.js"
+    "index": "node indexData.js",
+    "seed:projects": "node seedProjects.js"
   },
   "keywords": [],
   "author": "",

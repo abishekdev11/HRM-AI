@@ -9,6 +9,8 @@ const departmentRoutes = require("./routes/departmentRoutes");
 const userRoutes = require("./routes/userRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const leaveRoutes = require("./routes/leaveRoutes");
+const projectRoutes = require("./routes/projectRoutes");
+const queryRoutes = require("./routes/queryRoutes");
 
 const app = express();
 app.use(express.json());
@@ -27,6 +29,8 @@ app.use("/api/departments", departmentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/leave", leaveRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/queries", queryRoutes);
 
 
 const PORT = process.env.PORT || 3000;

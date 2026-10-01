@@ -58,12 +58,12 @@ async function chatController(req, res) {
             ? null
             : await routeChatRequest({ question, actor: req.user });
         const answer = action
-            ? await executeChatAction(action)
+            ? await executeChatAction(action, req.user)
             : workflowAnswer;
 
         return sendAudioResponse(
             res,
-            answer || "I can help with employee and leave actions. Ask me to view users, leave requests, or update an employee status.",
+            answer || "I can help with employees, attendance, departments, projects, leave requests, and employee queries.",
             question,
             detectedLanguage
         );

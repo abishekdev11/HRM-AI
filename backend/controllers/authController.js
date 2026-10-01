@@ -68,6 +68,7 @@ async function login(req, res) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const now = new Date();
     let attendance = await Attendance.findOne({ user: user._id, date: today });
 
     if (!attendance) {
@@ -76,11 +77,28 @@ async function login(req, res) {
         user: user._id,
         date: today,
         status: 'Present',
-        loginTime: new Date(),
+        loginTime: now,
+        workSessions: [{ startedAt: now, breaks: [] }],
       });
-    } else if (!attendance.loginTime) {
-      // Update login time if it doesn't exist
-      attendance.loginTime = new Date();
+    } else {
+      const sessions = attendance.workSessions || [];
+      let activeSession = [...sessions].reverse().find((session) => !session.endedAt);
+
+      if (!activeSession) {
+        if (sessions.length === 0 && attendance.loginTime && attendance.logoutTime) {
+          sessions.push({ startedAt: attendance.loginTime, endedAt: attendance.logoutTime, breaks: [] });
+          sessions.push({ startedAt: now, breaks: [] });
+        } else if (sessions.length === 0 && attendance.loginTime) {
+          sessions.push({ startedAt: attendance.loginTime, breaks: [] });
+        } else {
+          sessions.push({ startedAt: now, breaks: [] });
+        }
+        attendance.workSessions = sessions;
+      }
+
+      if (!attendance.loginTime) attendance.loginTime = now;
+      attendance.logoutTime = null;
+      attendance.status = 'Present';
       await attendance.save();
     }
 
@@ -139,7 +157,22 @@ async function logout(req, res) {
     const attendance = await Attendance.findOne({ user: userId, date: today });
 
     if (attendance) {
-      attendance.logoutTime = new Date();
+      const now = new Date();
+      const sessions = attendance.workSessions || [];
+      let activeSession = [...sessions].reverse().find((session) => !session.endedAt);
+
+      if (!activeSession && sessions.length === 0 && attendance.loginTime && !attendance.logoutTime) {
+        attendance.workSessions = [{ startedAt: attendance.loginTime, breaks: [] }];
+        activeSession = attendance.workSessions[0];
+      }
+
+      if (activeSession) {
+        const openBreak = [...activeSession.breaks].reverse().find((item) => !item.endedAt);
+        if (openBreak) openBreak.endedAt = now;
+        activeSession.endedAt = now;
+      }
+
+      attendance.logoutTime = now;
       await attendance.save();
     }
 

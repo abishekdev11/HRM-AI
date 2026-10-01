@@ -291,8 +291,10 @@ async function rejectLeaveRequest({ actor, leaveIdentifier }) {
   });
 }
 
-async function executeLeaveAction(action) {
+async function executeLeaveAction(action, actor) {
   if (!action || action.type !== "leaveDecision") return null;
+  if (!actor) return "You must be logged in to process leave requests.";
+  if (!["admin", "manager"].includes(actor.role)) return "Only admins or managers can approve or reject leave requests.";
 
   const target = String(action.target || "").trim().replace(/[.,!?;:]+$/g, "");
   let user = await User.findOne({ employeeId: target.toUpperCase() });
@@ -326,11 +328,44 @@ async function executeLeaveAction(action) {
   return `Leave for ${user.name} has been ${action.decision.toLowerCase()}.`;
 }
 
+async function applyLeaveRequest({ actor, from, to, type, reason }) {
+  if (!actor) return "You must be logged in to apply for leave.";
+  if (!from || !to) return "Please provide both a start date and an end date for your leave request.";
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  if (!Number.isFinite(fromDate.getTime()) || !Number.isFinite(toDate.getTime()) || fromDate >= toDate) {
+    return "The leave dates are invalid. The start date must be before the end date.";
+  }
+  const leave = await Leave.create({
+    user: actor._id,
+    from: fromDate,
+    to: toDate,
+    type: type || "Casual",
+    reason: reason || "",
+  });
+  return `Your ${leave.type} leave request from ${fromDate.toISOString().slice(0, 10)} to ${toDate.toISOString().slice(0, 10)} was submitted as pending.`;
+}
+
+async function executeLeaveModuleAction(action, actor) {
+  if (!action || action.type !== "moduleAction" || action.module !== "leave") return null;
+  if (action.operation === "apply") {
+    return applyLeaveRequest({ actor, from: action.from, to: action.to, type: action.leaveType || action.typeName, reason: action.reason });
+  }
+  if (action.operation === "approve" || action.operation === "reject") {
+    return action.operation === "approve"
+      ? approveLeaveRequest({ actor, leaveIdentifier: action.identifier || action.target })
+      : rejectLeaveRequest({ actor, leaveIdentifier: action.identifier || action.target });
+  }
+  return "Unsupported leave action.";
+}
+
 module.exports = {
   findLeaveByIdentifier,
   approveLeaveRequest,
   rejectLeaveRequest,
   executeLeaveAction,
+  applyLeaveRequest,
+  executeLeaveModuleAction,
   canUpdateLeaveStatus,
   findClosestUserNameMatch,
 };

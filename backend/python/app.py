@@ -7,7 +7,7 @@ app = FastAPI()
 
 # Load model once when the server starts
 model = WhisperModel(
-    "tiny",
+    "medium",
     device="cpu",
     compute_type="int8"
 )
