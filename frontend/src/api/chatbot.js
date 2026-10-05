@@ -77,6 +77,11 @@ export async function getProjects() {
   return response.data;
 }
 
+export async function getProjectFormOptions() {
+  const response = await API.get("/api/projects/options");
+  return response.data;
+}
+
 export async function createProject(projectData) {
   const response = await API.post("/api/projects", projectData);
   return response.data;

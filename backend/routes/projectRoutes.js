@@ -4,6 +4,7 @@ const authorize = require("../middleware/authorize");
 const {
   getProjects,
   getProjectById,
+  getProjectFormOptions,
   createProject,
   updateProject,
   archiveProject,
@@ -12,6 +13,7 @@ const {
 const router = express.Router();
 
 router.get("/", protect, getProjects);
+router.get("/options", protect, authorize("admin", "manager"), getProjectFormOptions);
 router.get("/:id", protect, getProjectById);
 router.post("/", protect, authorize("admin", "manager"), createProject);
 router.put("/:id", protect, authorize("admin", "manager"), updateProject);

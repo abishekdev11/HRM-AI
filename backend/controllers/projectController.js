@@ -10,6 +10,23 @@ const populateProject = (query) => query
   .populate("teamLead", userProjection)
   .populate("employees", userProjection);
 
+const getProjectFormOptions = async (req, res) => {
+  try {
+    const users = await User.find({ isActive: true })
+      .select("name employeeId designation role")
+      .sort({ name: 1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: { users },
+    });
+  } catch (error) {
+    console.error("Get project form options error:", error);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 const validateUsers = async (teamLead, employees = []) => {
   const ids = [teamLead, ...employees];
   if (ids.some((id) => !mongoose.Types.ObjectId.isValid(id))) {
@@ -55,6 +72,7 @@ const createProject = async (req, res) => {
     const {
       name,
       client,
+      clientDetails,
       progress,
       teamLead,
       employees = [],
@@ -62,11 +80,30 @@ const createProject = async (req, res) => {
       status,
     } = req.body;
 
-    if (!name || !client || progress === undefined || !teamLead) {
+    if (!name || (!client && !clientDetails) || progress === undefined || !teamLead) {
       return res.status(400).json({
         success: false,
-        message: "Name, client, progress, and team lead are required",
+        message: "Project name, client details, progress, and team lead are required",
       });
+    }
+
+    let clientId = client;
+    if (clientDetails) {
+      const clientName = String(clientDetails.name || "").trim();
+      const clientEmail = String(clientDetails.email || "").trim().toLowerCase();
+      const contactNo = String(clientDetails.contactNo || "").trim();
+      const address = String(clientDetails.address || "").trim();
+
+      if (!clientName || !clientEmail || !contactNo || !address) {
+        return res.status(400).json({
+          success: false,
+          message: "Client name, email, mobile number, and address are required",
+        });
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
+        return res.status(400).json({ success: false, message: "Enter a valid client email address" });
+      }
     }
 
     const numericProgress = Number(progress);
@@ -77,13 +114,6 @@ const createProject = async (req, res) => {
       });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(client) || !(await Client.exists({ _id: client, isActive: true }))) {
-      return res.status(400).json({
-        success: false,
-        message: "Client must be an active client record",
-      });
-    }
-
     if (!Array.isArray(employees) || !(await validateUsers(teamLead, employees))) {
       return res.status(400).json({
         success: false,
@@ -91,9 +121,46 @@ const createProject = async (req, res) => {
       });
     }
 
+    if (clientDetails) {
+      const clientName = String(clientDetails.name).trim();
+      const clientEmail = String(clientDetails.email).trim().toLowerCase();
+      const contactNo = String(clientDetails.contactNo).trim();
+      const address = String(clientDetails.address).trim();
+      let clientRecord = await Client.findOne({ name: clientName });
+
+      if (clientRecord && !clientRecord.isActive) {
+        return res.status(409).json({ success: false, message: "A client with this name exists but is inactive" });
+      }
+
+      if (clientRecord) {
+        const sameDetails = clientRecord.email === clientEmail
+          && clientRecord.contactNo === contactNo
+          && clientRecord.address === address;
+        if (!sameDetails) {
+          return res.status(409).json({
+            success: false,
+            message: "A client with this name already exists. Check the email, mobile number, and address.",
+          });
+        }
+      } else {
+        try {
+          clientRecord = await Client.create({ name: clientName, email: clientEmail, contactNo, address });
+        } catch (error) {
+          if (error.code === 11000) {
+            return res.status(409).json({ success: false, message: "A client with this name already exists" });
+          }
+          throw error;
+        }
+      }
+
+      clientId = clientRecord._id;
+    } else if (!mongoose.Types.ObjectId.isValid(client) || !(await Client.exists({ _id: client, isActive: true }))) {
+      return res.status(400).json({ success: false, message: "Client must be an active client record" });
+    }
+
     const project = await Project.create({
       name,
-      client,
+      client: clientId,
       progress: numericProgress,
       teamLead,
       employees,
@@ -172,6 +239,7 @@ const archiveProject = async (req, res) => {
 module.exports = {
   getProjects,
   getProjectById,
+  getProjectFormOptions,
   createProject,
   updateProject,
   archiveProject,

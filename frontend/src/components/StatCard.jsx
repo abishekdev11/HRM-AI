@@ -5,29 +5,20 @@ function StatCard({ title, value, icon, color, onClick, expanded, detailsId }) {
       onClick={onClick}
       aria-expanded={expanded}
       aria-controls={detailsId}
-      className="stagger-in group w-full text-left bg-white/90 rounded-2xl border border-white shadow-[0_12px_30px_rgba(15,23,42,0.06)] p-6 hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(15,23,42,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 transition duration-300"
+      className={`stagger-in group w-full rounded-lg border bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 ${expanded ? "border-teal-500 ring-1 ring-teal-500/20" : "border-slate-200 hover:border-teal-200"}`}
     >
-
-      <div className="flex justify-between items-center">
-
-        <div>
-
-          <p className="text-sm font-medium text-slate-500">
-            {title}
-          </p>
-
-          <h2 className="text-3xl font-bold tracking-tight text-slate-800 mt-2">
-            {value}
-          </h2>
-
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+          <h2 className="mt-3 text-3xl font-bold tabular-nums text-slate-900">{value}</h2>
         </div>
-
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-6 group-hover:scale-105 transition ${color}`}>
+        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg text-white shadow-sm transition-transform group-hover:scale-105 ${color}`}>
           {icon}
         </div>
-
       </div>
-
+      <div className="mt-5 h-1 overflow-hidden rounded-full bg-slate-100">
+        <div className={`h-full w-full rounded-full opacity-70 ${color}`} />
+      </div>
     </button>
   );
 }

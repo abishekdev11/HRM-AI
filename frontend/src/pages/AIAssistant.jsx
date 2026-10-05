@@ -5,6 +5,8 @@ const API_BASE_URL = import.meta.env.DEV
   ? "http://localhost:3000"
   : "https://hrm-ai-backend-ltot.onrender.com";
 const LIVE_SOCKET_URL = API_BASE_URL.replace(/^http/, "ws") + "/api/chat/live";
+const SILENCE_THRESHOLD = 0.015;
+const SILENCE_DURATION_MS = 3000;
 
 function encodeBase64(bytes) {
   let binary = "";
@@ -61,6 +63,8 @@ async function connectBackendLive({ onEvent, withMicrophone = false, isMuted }) 
   let nextPlaybackTime = 0;
   let closed = false;
   let ready = false;
+  let speechDetected = false;
+  let silenceTimer = null;
   let resolveReady;
   let rejectReady;
 
@@ -74,6 +78,10 @@ async function connectBackendLive({ onEvent, withMicrophone = false, isMuted }) 
   );
 
   const stopMicrophone = async () => {
+    if (silenceTimer) {
+      window.clearTimeout(silenceTimer);
+      silenceTimer = null;
+    }
     if (socket.readyState === WebSocket.OPEN && microphoneStream) {
       socket.send(JSON.stringify({ type: "audioEnd" }));
     }
@@ -92,6 +100,7 @@ async function connectBackendLive({ onEvent, withMicrophone = false, isMuted }) 
   const startMicrophone = async () => {
     if (microphoneStream) return;
     microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    speechDetected = false;
     try {
       inputContext = new AudioContext({ sampleRate: 16000 });
       await inputContext.resume();
@@ -100,12 +109,30 @@ async function connectBackendLive({ onEvent, withMicrophone = false, isMuted }) 
       processor = activeInputContext.createScriptProcessor(1024, 1, 1);
       processor.onaudioprocess = (audioEvent) => {
         audioEvent.outputBuffer.getChannelData(0).fill(0);
-        if (socket.readyState !== WebSocket.OPEN) return;
+        if (!microphoneStream || socket.readyState !== WebSocket.OPEN) return;
         const samples = resample(
           audioEvent.inputBuffer.getChannelData(0),
           activeInputContext.sampleRate,
           16000
         );
+        const volume = Math.sqrt(
+          samples.reduce((sum, sample) => sum + sample * sample, 0) / samples.length
+        );
+
+        if (volume >= SILENCE_THRESHOLD) {
+          speechDetected = true;
+          if (silenceTimer) {
+            window.clearTimeout(silenceTimer);
+            silenceTimer = null;
+          }
+        } else if (speechDetected && !silenceTimer) {
+          silenceTimer = window.setTimeout(() => {
+            silenceTimer = null;
+            onEvent({ type: "silenceDetected" });
+            void stopMicrophone();
+          }, SILENCE_DURATION_MS);
+        }
+
         socket.send(JSON.stringify({
           type: "audio",
           data: encodeBase64(toPcm16(samples)),
@@ -253,6 +280,10 @@ function AIAssistant() {
           pendingTypedInputRef.current = false;
           setLoading(false);
         }
+        if (event.type === "silenceDetected") {
+          setLive(false);
+          setLoading(true);
+        }
         if (event.type === "error") {
           setMessages((prev) => [...prev, { sender: "bot", text: event.message }]);
           setLoading(false);
@@ -327,6 +358,7 @@ function AIAssistant() {
   const stopVoice = async () => {
     const session = liveRef.current;
     setLive(false);
+    setLoading(true);
     if (session) await session.stopMicrophone();
   };
 
@@ -370,7 +402,7 @@ function AIAssistant() {
   // Status Text
   // -----------------------------------
 
-  const status = loading ? "Gemini is responding..." : live ? "Listening..." : "";
+  const status = loading ? "AI is thinking..." : live ? "Listening..." : "";
 
       return (
     <div className="h-full flex flex-col">

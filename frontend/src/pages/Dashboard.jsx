@@ -4,10 +4,11 @@ import {
     FaUsers,
     FaCalendarCheck,
     FaUmbrellaBeach,
-  FaRobot,
+  FaUserTimes,
   FaTimes
 } from "react-icons/fa";
 import { getAttendanceSummary, getDashboardDetails, getLeaves } from "../api/chatbot";
+import { Link } from "react-router-dom";
 
 const formatDate = (value) => value ? new Date(value).toLocaleDateString() : "Date unavailable";
 
@@ -92,11 +93,11 @@ function Dashboard() {
     : 0;
 
   const cards = [
-    { id: "employees", title: "Total Employees", value: summary?.totalEmployees || "0", icon: <FaUsers size={24} />, color: "bg-blue-600", dataKey: "employees", kind: "employee" },
-    { id: "present", title: "Present Today", value: summary?.presentCount || "0", icon: <FaCalendarCheck size={24} />, color: "bg-green-600", dataKey: "present", kind: "attendance" },
-    { id: "leave", title: "Leave", value: summary?.approvedLeaveCount || "0", icon: <FaUmbrellaBeach size={24} />, color: "bg-yellow-500", dataKey: "onLeave", kind: "leave" },
-    { id: "absent", title: "Absent Today", value: summary?.absentCount || "0", icon: <FaRobot size={24} />, color: "bg-purple-600", dataKey: "absent", kind: "employee" },
-    { id: "pending", title: "Pending Leaves", value: summary?.pendingLeaves || "0", icon: <FaUmbrellaBeach size={24} />, color: "bg-orange-500", dataKey: "pendingLeaveRequests", kind: "leave" },
+    { id: "employees", title: "Total employees", value: summary?.totalEmployees || "0", icon: <FaUsers size={17} />, color: "bg-slate-800", dataKey: "employees", kind: "employee" },
+    { id: "present", title: "Present today", value: summary?.presentCount || "0", icon: <FaCalendarCheck size={17} />, color: "bg-teal-700", dataKey: "present", kind: "attendance" },
+    { id: "leave", title: "On leave", value: summary?.approvedLeaveCount || "0", icon: <FaUmbrellaBeach size={17} />, color: "bg-amber-600", dataKey: "onLeave", kind: "leave" },
+    { id: "absent", title: "Absent today", value: summary?.absentCount || "0", icon: <FaUserTimes size={17} />, color: "bg-rose-700", dataKey: "absent", kind: "employee" },
+    { id: "pending", title: "Pending leaves", value: summary?.pendingLeaves || "0", icon: <FaUmbrellaBeach size={17} />, color: "bg-cyan-700", dataKey: "pendingLeaveRequests", kind: "leave" },
   ];
 
   const openCardDetails = async (card) => {
@@ -131,29 +132,39 @@ function Dashboard() {
   return (
     <div className="page-enter max-w-[1600px] mx-auto">
       {/* Heading */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-5 mb-8">
+      <div className="mb-7 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-600 mb-2">Overview</p>
-          <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
-            Dashboard
-          </h1>
-          <p className="text-slate-500 mt-2">
-            Welcome back, {user?.name || "User"}. Here is today at a glance.
-          </p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">Overview</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
+          <p className="mt-2 text-sm text-slate-500">Welcome back, {user?.name || "User"}. Here is today at a glance.</p>
         </div>
-        <button className="bg-slate-900 text-white px-5 py-3 rounded-xl font-semibold shadow-lg shadow-slate-900/15 hover:-translate-y-0.5 hover:bg-blue-700 transition">
-          Generate Report
-        </button>
+        <div className="w-full max-w-sm border-l-2 border-teal-600 pl-4 md:w-72">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-slate-700">Workforce presence</span>
+            <span className="text-sm font-bold tabular-nums text-teal-800">{attendancePercentage}%</span>
+          </div>
+          <div
+            className="h-2 overflow-hidden rounded-full bg-slate-200"
+            role="progressbar"
+            aria-label="Workforce present today"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={attendancePercentage}
+          >
+            <div className="h-full rounded-full bg-teal-600 transition-[width] duration-500" style={{ width: `${attendancePercentage}%` }} />
+          </div>
+          <p className="mt-1.5 text-xs text-slate-500">{summary.presentCount} of {summary.totalEmployees} employees present</p>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+        <div role="alert" className="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           {error}
         </div>
       )}
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
           <StatCard
             key={card.id}
@@ -172,7 +183,7 @@ function Dashboard() {
         <section
           id="dashboard-card-details"
           aria-live="polite"
-          className="bg-white/90 rounded-2xl border border-slate-200 mt-6 p-5 lg:p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]"
+          className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6"
         >
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
@@ -185,13 +196,13 @@ function Dashboard() {
               type="button"
               onClick={() => setSelectedCard(null)}
               aria-label="Close dashboard details"
-              className="p-2 text-slate-500 hover:text-slate-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+              className="grid h-9 w-9 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
             >
               <FaTimes />
             </button>
           </div>
 
-          {detailsError && <p role="alert" className="text-red-700 py-4">{detailsError}</p>}
+          {detailsError && <p role="alert" className="py-4 text-sm text-rose-700">{detailsError}</p>}
           {detailsLoading && <p className="text-slate-500 py-4">Loading records...</p>}
           {!detailsLoading && !detailsError && detailItems.length === 0 && (
             <p className="text-slate-500 py-4">No records found.</p>
@@ -226,39 +237,36 @@ function Dashboard() {
       )}
 
       {/* Recent Activity */}
-      <div className="bg-white/90 rounded-2xl shadow-[0_12px_30px_rgba(15,23,42,0.06)] border border-white mt-8 p-6 lg:p-7">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">
-            Recent Leave Applications
-          </h2>
-          <button className="text-blue-600 hover:text-blue-700 font-medium">
-            View All
-          </button>
+      <section className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
+          <div>
+            <h2 className="font-semibold text-slate-900">Recent leave applications</h2>
+            <p className="mt-1 text-sm text-slate-500">Latest requests across your organization.</p>
+          </div>
+          <Link to="/leave" className="shrink-0 text-sm font-semibold text-teal-800 hover:text-teal-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">
+            View all
+          </Link>
         </div>
-
-        <div className="space-y-5">
+        <div className="divide-y divide-slate-100 px-5">
           {leaves && leaves.length > 0 ? (
             leaves.map((leave) => (
-              <div key={leave._id} className="flex items-start gap-4">
-                <div className={`w-3 h-3 ${getActivityColor(leave.status)} rounded-full mt-2`}></div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800">
+              <div key={leave._id} className="flex items-center gap-3 py-4">
+                <div className={`h-2.5 w-2.5 shrink-0 ${getActivityColor(leave.status)} rounded-full ring-4 ring-slate-50`} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-800">
                     {leave.user?.name || "Employee"} applied for {leave.type?.toLowerCase() || "leave"}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    Status: <span className="font-semibold">{leave.status}</span>
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {getTimeAgo(leave.createdAt)}
+                  <p className="mt-1 text-xs text-slate-500">
+                    {leave.status} · {getTimeAgo(leave.createdAt)}
                   </p>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-center py-4">No recent leave applications</p>
+            <p className="py-10 text-center text-sm text-slate-500">No recent leave applications.</p>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

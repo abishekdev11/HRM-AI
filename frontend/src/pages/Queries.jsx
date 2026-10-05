@@ -169,7 +169,7 @@ function Queries() {
 
   return (
     <div className="page-enter mx-auto flex min-h-[calc(100vh-12rem)] max-w-[1600px] flex-col">
-      <div className="mb-5 flex items-center justify-between gap-4">
+      <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">Communication</p>
           <h1 className="text-3xl font-bold text-slate-900">Queries</h1>
@@ -177,15 +177,15 @@ function Queries() {
         <button
           type="button"
           onClick={startNewQuery}
-          className="inline-flex items-center gap-2 rounded bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700"
+          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
         >
           <FaPlus size={12} /> New query
         </button>
       </div>
 
-      {error && <p role="alert" className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+      {error && <p role="alert" className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
 
-      <div className="grid min-h-[520px] flex-1 grid-cols-1 overflow-hidden rounded border border-slate-200 bg-white shadow-sm lg:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)]">
+      <div className="grid min-h-[520px] flex-1 grid-cols-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)]">
         <aside className="flex max-h-[32rem] flex-col border-b border-slate-200 lg:max-h-none lg:border-b-0 lg:border-r">
           <div className="border-b border-slate-200 px-4 py-3">
             <h2 className="font-semibold text-slate-800">Your conversations</h2>
@@ -202,7 +202,7 @@ function Queries() {
                   type="button"
                   key={query._id}
                   onClick={() => openQuery(query._id)}
-                  className={`block w-full border-b border-slate-100 px-4 py-3 text-left hover:bg-slate-50 ${activeQueryId === query._id && !composing ? "bg-teal-50" : ""}`}
+                  className={`block w-full border-b border-slate-100 border-l-2 px-4 py-3 text-left transition-colors hover:bg-slate-50 ${activeQueryId === query._id && !composing ? "border-l-teal-700 bg-teal-50" : "border-l-transparent"}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span className="truncate font-medium text-slate-800">{participant?.name || "Conversation"}</span>
@@ -229,7 +229,7 @@ function Queries() {
                   required
                   value={recipientId}
                   onChange={(event) => setRecipientId(event.target.value)}
-                  className="rounded border border-slate-300 bg-white px-3 py-2.5 font-normal"
+                  className="rounded-md border border-slate-300 bg-white px-3 py-2.5 font-normal outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
                 >
                   <option value="">Select a recipient</option>
                   {recipients.map((recipient) => (
@@ -246,7 +246,7 @@ function Queries() {
                   maxLength={120}
                   value={subject}
                   onChange={(event) => setSubject(event.target.value)}
-                  className="rounded border border-slate-300 px-3 py-2.5 font-normal"
+                  className="rounded-md border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
                 />
               </label>
               <label className="grid flex-1 gap-1.5 text-sm font-medium text-slate-700">
@@ -256,14 +256,14 @@ function Queries() {
                   maxLength={4000}
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
-                  className="min-h-36 flex-1 resize-y rounded border border-slate-300 px-3 py-2.5 font-normal"
+                  className="min-h-36 flex-1 resize-y rounded-md border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
                 />
               </label>
               <div className="flex justify-end">
                 <button
                   type="submit"
                   disabled={sending || !recipients.length}
-                  className="inline-flex items-center gap-2 rounded bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
                 >
                   <FaPaperPlane size={12} /> {sending ? "Sending..." : "Send query"}
                 </button>
@@ -282,7 +282,7 @@ function Queries() {
                   const isOwnMessage = message.sender?._id === userId;
                   return (
                     <div key={message._id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
-                      <article className={`max-w-[85%] rounded px-4 py-3 shadow-sm sm:max-w-[70%] ${isOwnMessage ? "bg-teal-700 text-white" : "border border-slate-200 bg-white text-slate-800"}`}>
+                      <article className={`max-w-[85%] rounded-lg px-4 py-3 shadow-sm sm:max-w-[70%] ${isOwnMessage ? "bg-teal-700 text-white" : "border border-slate-200 bg-white text-slate-800"}`}>
                         <p className={`mb-1 text-xs font-semibold ${isOwnMessage ? "text-teal-100" : "text-slate-500"}`}>
                           {isOwnMessage ? "You" : message.sender?.name || "Participant"}
                         </p>
@@ -304,13 +304,13 @@ function Queries() {
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   placeholder="Write a message..."
-                  className="min-h-11 flex-1 resize-y rounded border border-slate-300 px-3 py-2.5 text-sm"
+                  className="min-h-11 flex-1 resize-y rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
                 />
                 <button
                   type="submit"
                   aria-label="Send message"
                   disabled={sending || !draft.trim()}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded bg-teal-700 text-white hover:bg-teal-800 disabled:opacity-50"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-white hover:bg-teal-800 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
                 >
                   <FaPaperPlane />
                 </button>

@@ -1,29 +1,38 @@
 import { useEffect, useState } from "react";
 import {
+  FaPlus,
   FaBuilding,
   FaEnvelope,
   FaMapMarkerAlt,
   FaPhone,
   FaProjectDiagram,
+  FaChevronRight,
   FaTimes,
   FaUserTie,
   FaUsers,
 } from "react-icons/fa";
-import { getProjects } from "../api/chatbot";
+import { createProject, getProjectFormOptions, getProjects } from "../api/chatbot";
+import ProjectFormModal from "../components/ProjectFormModal";
 
 function ProgressCircle({ project, size = "large" }) {
   const isSmall = size === "small";
+  const progress = Math.min(100, Math.max(0, Number(project.progress) || 0));
+  const accent = project.accent || "#0f766e";
 
   return (
     <div
-      className={`project-progress-circle ${isSmall ? "project-progress-circle-small" : ""}`}
+      className={`project-progress-circle ${isSmall ? "project-progress-circle-small" : ""} ${size === "card" ? "project-progress-circle-card" : ""}`}
       style={{
-        background: `conic-gradient(${project.accent} ${project.progress}%, #e2e8f0 0)`,
+        background: `conic-gradient(${accent} ${progress}%, #e2e8f0 0)`,
       }}
-      aria-label={`${project.progress}% complete`}
+      role="progressbar"
+      aria-label={`${project.name} progress`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={progress}
     >
       <div className="project-progress-circle-inner">
-        <strong>{project.progress}%</strong>
+        <strong>{progress}%</strong>
         {!isSmall && <span>complete</span>}
       </div>
     </div>
@@ -32,6 +41,19 @@ function ProgressCircle({ project, size = "large" }) {
 
 function Projects() {
   const [projects, setProjects] = useState([]);
+  const [canManageProjects] = useState(() => {
+    try {
+      const role = JSON.parse(localStorage.getItem("user") || "{}").role;
+      return role === "admin" || role === "manager";
+    } catch {
+      return false;
+    }
+  });
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [projectFormKey, setProjectFormKey] = useState(0);
+  const [projectOptions, setProjectOptions] = useState({ users: [] });
+  const [optionsLoading, setOptionsLoading] = useState(canManageProjects);
+  const [optionsError, setOptionsError] = useState("");
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -53,9 +75,50 @@ function Projects() {
     loadProjects();
   }, []);
 
+  useEffect(() => {
+    if (!canManageProjects) return undefined;
+    let active = true;
+    getProjectFormOptions()
+      .then((response) => {
+        if (active) setProjectOptions(response.data || { users: [] });
+      })
+      .catch((optionsLoadError) => {
+        if (active) {
+          console.error("Error loading project form options:", optionsLoadError);
+          setOptionsError(optionsLoadError.response?.data?.message || "Could not load clients and team members.");
+        }
+      })
+      .finally(() => {
+        if (active) setOptionsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [canManageProjects]);
+
+  const handleCreateProject = async (projectData) => {
+    const response = await createProject(projectData);
+    setProjects((currentProjects) => [response.data, ...currentProjects]);
+    setShowProjectForm(false);
+  };
+
+  const retryProjectOptions = async () => {
+    setOptionsLoading(true);
+    setOptionsError("");
+    try {
+      const response = await getProjectFormOptions();
+      setProjectOptions(response.data || { users: [] });
+    } catch (optionsLoadError) {
+      console.error("Error loading project form options:", optionsLoadError);
+      setOptionsError(optionsLoadError.response?.data?.message || "Could not load clients and team members.");
+    } finally {
+      setOptionsLoading(false);
+    }
+  };
+
   return (
     <div className="page-enter max-w-[1500px] mx-auto">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+      <div className="mb-7 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-600 mb-2">
             Delivery workspace
@@ -67,9 +130,23 @@ function Projects() {
             Track project health, ownership, and team allocation in one place.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <span className="w-2.5 h-2.5 rounded-full bg-teal-600" />
-          {projects.length} active projects
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+          <div className="flex items-baseline gap-2 border-l-2 border-teal-600 pl-4 text-slate-600">
+            <span className="text-2xl font-bold tabular-nums text-slate-900">{projects.length}</span>
+            <span className="text-sm">active projects</span>
+          </div>
+          {canManageProjects && (
+            <button
+              type="button"
+              onClick={() => {
+                setProjectFormKey((currentKey) => currentKey + 1);
+                setShowProjectForm(true);
+              }}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+            >
+              <FaPlus size={12} /> Add project
+            </button>
+          )}
         </div>
       </div>
 
@@ -79,57 +156,68 @@ function Projects() {
         </div>
       )}
 
-      {loading && <p className="text-slate-500">Loading projects...</p>}
+      {loading && <p className="py-8 text-center text-sm text-slate-500">Loading projects...</p>}
 
       {!loading && !error && projects.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-slate-500">
+        <div className="rounded-lg border border-dashed border-slate-300 bg-white/70 p-10 text-center text-slate-500">
           No active projects found.
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {projects.map((project, index) => (
-          <div
+          <article
             key={project._id || project.id}
-            onClick={() => setSelectedProject(project)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                setSelectedProject(project);
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            className="project-card stagger-in text-left"
+            className="project-card stagger-in flex flex-col"
             style={{ animationDelay: `${index * 80}ms` }}
           >
-            <div className="flex justify-center mb-6">
-              <ProgressCircle project={project} />
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-700">Project</p>
+              <FaProjectDiagram className="text-slate-300" aria-hidden="true" />
             </div>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400 mb-2">
-                  Project
-                </p>
-                <h2 className="text-lg font-bold text-slate-900">{project.name}</h2>
+
+            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+              <div className="min-w-0">
+                <h2 className="line-clamp-2 text-lg font-bold leading-snug text-slate-900">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProject(project)}
+                    className="text-left hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+                  >
+                    {project.name}
+                  </button>
+                </h2>
                 <button
                   type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setSelectedClient(project.client);
-                  }}
-                  className="project-client-link text-sm text-slate-500 mt-1"
+                  onClick={() => project.client && setSelectedClient(project.client)}
+                  disabled={!project.client}
+                  className="project-client-link mt-2 text-sm text-slate-500 disabled:cursor-default"
                 >
                   {project.client?.name || "Client unavailable"}
                 </button>
               </div>
-              <FaProjectDiagram className="text-slate-300 mt-1" />
+              <ProgressCircle project={project} size="card" />
             </div>
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-sm">
-              <span className="text-slate-500">Team lead</span>
-              <span className="font-semibold text-slate-700">{project.teamLead?.name || "Unassigned"}</span>
+
+            <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Team lead</p>
+                <p className="truncate text-sm font-semibold text-slate-700">{project.teamLead?.name || "Unassigned"}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="text-xs font-medium text-slate-500">{project.employees?.length || 0} members</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProject(project)}
+                  aria-label={`View ${project.name} details`}
+                  title="View project details"
+                  className="grid h-8 w-8 place-items-center rounded-md text-slate-500 hover:bg-teal-50 hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+                >
+                  <FaChevronRight size={12} />
+                </button>
+              </div>
             </div>
-          </div>
+          </article>
         ))}
       </div>
 
@@ -227,6 +315,17 @@ function Projects() {
           </div>
         </div>
       )}
+
+      <ProjectFormModal
+        key={projectFormKey}
+        isOpen={showProjectForm}
+        onClose={() => setShowProjectForm(false)}
+        onSubmit={handleCreateProject}
+        onRetryOptions={retryProjectOptions}
+        options={projectOptions}
+        optionsLoading={optionsLoading}
+        optionsError={optionsError}
+      />
     </div>
   );
 }

@@ -122,21 +122,21 @@ button, a, input {
 }
 
 .project-card {
-  min-height: 22rem;
-  padding: 1.5rem;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 1.5rem;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+  min-height: 15rem;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .project-card:hover,
 .project-card:focus-visible {
   border-color: rgba(20, 184, 166, 0.45);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.09);
   outline: none;
-  transform: translateY(-4px);
+  transform: translateY(-2px);
 }
 
 .project-progress-circle {
@@ -146,6 +146,13 @@ button, a, input {
   border-radius: 999px;
   display: grid;
   place-items: center;
+}
+
+.project-progress-circle-card {
+  width: 6rem;
+  height: 6rem;
+  padding: 0.4rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
 }
 
 .project-progress-circle-small {
@@ -173,6 +180,10 @@ button, a, input {
 
 .project-progress-circle-small .project-progress-circle-inner strong {
   font-size: 1.35rem;
+}
+
+.project-progress-circle-card .project-progress-circle-inner strong {
+  font-size: 1.2rem;
 }
 
 .project-progress-circle-inner span {

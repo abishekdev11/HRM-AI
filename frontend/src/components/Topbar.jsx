@@ -1,9 +1,10 @@
-import { FaBell, FaSearch } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import WorkProgress from "./WorkProgress";
 
 function Topbar() {
   const [user, setUser] = useState(null);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -18,66 +19,41 @@ function Topbar() {
 
   const userName = user?.name || "User";
   const userRole = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
-  const initials = userName.split(" ").map(n => n[0]).join("").toUpperCase() || "U";
+  const initials = userName.split(/\s+/).filter(Boolean).slice(0, 2).map((namePart) => namePart[0]).join("").toUpperCase() || "U";
+  const sectionName = {
+    "/dashboard": "Dashboard",
+    "/projects": "Projects",
+    "/queries": "Queries",
+    "/users": "Employees",
+    "/departments": "Departments",
+    "/attendance": "Attendance",
+    "/leave": "Leave",
+    "/ai-assistant": "AI Assistant",
+  }[pathname] || "Workspace";
   const showWorkProgress = user && user.role !== "admin" && user.role !== "manager";
 
   return (
-    <header className="topbar border-b border-slate-200/80 sticky top-0 z-10">
-
-      <div className="h-20 flex items-center justify-between gap-4 px-6 lg:px-8">
-
-      {/* Search */}
-      <div className="relative w-full max-w-md">
-
-        <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
-        />
-
-      </div>
-
-      {/* Right Section */}
-      <div className="flex items-center gap-6">
-
-        {/* Notification */}
-        <button className="relative">
-
-          <FaBell size={18} className="text-slate-500" />
-
-          <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-            3
-          </span>
-
-        </button>
-
-        {/* User */}
-        <div className="flex items-center gap-3">
-
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-teal-500 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-500/20">
-            {initials}
-          </div>
-
-          <div>
-
-            <p className="font-semibold">
-              {userName}
-            </p>
-
-            <p className="text-sm text-gray-500">
-              {userRole}
-            </p>
-
-          </div>
-
+    <header className="topbar sticky top-0 z-10 border-b border-slate-200/80">
+      <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-700">CompanyHub</p>
+          <h2 className="truncate text-base font-semibold text-slate-900 sm:text-lg">{sectionName}</h2>
         </div>
 
+        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
+          <div className="hidden text-right sm:block">
+            <p className="max-w-48 truncate text-sm font-semibold text-slate-800">{userName}</p>
+            <p className="text-xs text-slate-500">{userRole}</p>
+          </div>
+          <div
+            className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-teal-500 text-sm font-bold text-white shadow-lg shadow-blue-500/20 ring-2 ring-white"
+            aria-label={`${userName}, ${userRole}`}
+            title={`${userName} · ${userRole}`}
+          >
+            {initials}
+          </div>
+        </div>
       </div>
-
-      </div>
-
       {showWorkProgress && <WorkProgress />}
 
     </header>

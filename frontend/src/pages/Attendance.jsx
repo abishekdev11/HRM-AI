@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getMyAttendance, getLeaves, approveLeave, rejectLeave, getAttendanceSummary } from "../api/chatbot";
+import { FaCalendarCheck, FaCheck, FaTimes, FaUmbrellaBeach, FaUserTimes } from "react-icons/fa";
 
 function Attendance() {
   const [loading, setLoading] = useState(false);
@@ -57,64 +58,109 @@ function Attendance() {
   };
 
   const canApproveLeaves = userRole === 'admin' || userRole === 'manager';
+  const metrics = [
+    { label: "Present today", value: summary.presentCount, icon: FaCalendarCheck, tone: "teal" },
+    { label: "Absent today", value: summary.absentCount, icon: FaUserTimes, tone: "rose" },
+    { label: "Pending leaves", value: summary.pendingLeaves, icon: FaUmbrellaBeach, tone: "amber" },
+  ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Attendance</h1>
-      </div>
+    <div className="page-enter mx-auto max-w-[1500px] space-y-6">
+      <header>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">Workforce</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Attendance</h1>
+        <p className="mt-2 text-sm text-slate-500">Review your recent attendance and pending leave requests.</p>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="font-semibold mb-3">My Recent Attendance</h2>
-          <ul className="space-y-2">
-            {records.map(r => (
-              <li key={r._id} className="text-sm">{new Date(r.date).toLocaleDateString()} — {r.status}</li>
-            ))}
-            {records.length===0 && <li className="text-sm text-gray-500">No records found.</li>}
-          </ul>
-        </div>
+      <section aria-label="Attendance summary" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {metrics.map(({ label, value, icon: Icon, tone }) => {
+          const tones = {
+            teal: "bg-teal-50 text-teal-700 ring-teal-100",
+            rose: "bg-rose-50 text-rose-700 ring-rose-100",
+            amber: "bg-amber-50 text-amber-800 ring-amber-100",
+          };
+          return (
+            <div key={label} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm">
+              <span className={`grid h-11 w-11 place-items-center rounded-lg ring-1 ${tones[tone]}`}>
+                <Icon size={17} />
+              </span>
+              <div>
+                <p className="text-sm text-slate-500">{label}</p>
+                <p className="mt-0.5 text-2xl font-bold tabular-nums text-slate-900">{value}</p>
+              </div>
+            </div>
+          );
+        })}
+      </section>
 
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="font-semibold mb-3">Summary</h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-3 bg-green-50 rounded">
-              <div className="text-sm text-gray-500">Present</div>
-              <div className="text-xl font-bold">{summary.presentCount}</div>
-            </div>
-            <div className="p-3 bg-red-50 rounded">
-              <div className="text-sm text-gray-500">Absent</div>
-              <div className="text-xl font-bold">{summary.absentCount}</div>
-            </div>
-            <div className="p-3 bg-yellow-50 rounded">
-              <div className="text-sm text-gray-500">Pending Leaves</div>
-              <div className="text-xl font-bold">{summary.pendingLeaves}</div>
-            </div>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h2 className="font-semibold text-slate-900">My recent attendance</h2>
+            <p className="mt-1 text-sm text-slate-500">Your latest recorded work days.</p>
           </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[360px] text-left">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Date</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {records.map((record) => (
+                  <tr key={record._id} className="hover:bg-slate-50/70">
+                    <td className="px-5 py-3.5 text-sm font-medium text-slate-700">
+                      {new Date(record.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800 ring-1 ring-inset ring-teal-100">{record.status}</span>
+                    </td>
+                  </tr>
+                ))}
+                {!loading && records.length === 0 && (
+                  <tr><td colSpan={2} className="px-5 py-12 text-center text-sm text-slate-500">No attendance records found.</td></tr>
+                )}
+                {loading && <tr><td colSpan={2} className="px-5 py-12 text-center text-sm text-slate-500">Loading attendance...</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-          <h3 className="font-semibold mt-4 mb-2">Pending Leave Requests</h3>
-          <ul className="space-y-2">
-            {pendingLeaves.map(l => (
-              <li key={l._id} className="flex justify-between items-center border p-2 rounded">
-                <div>
-                  <div className="font-medium">{l.user?.name || 'Unknown'}</div>
-                  <div className="text-sm text-gray-600">{new Date(l.from).toLocaleDateString()} - {new Date(l.to).toLocaleDateString()}</div>
-                  {dateErrors[l._id] && <div className="text-red-600 text-xs mt-1">{dateErrors[l._id]}</div>}
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+            <div>
+              <h2 className="font-semibold text-slate-900">Pending leave requests</h2>
+              <p className="mt-1 text-sm text-slate-500">Requests awaiting review.</p>
+            </div>
+            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-200">{pendingLeaves.length} pending</span>
+          </div>
+          <ul className="divide-y divide-slate-100">
+            {pendingLeaves.map((leave) => (
+              <li key={leave._id} className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-800">{leave.user?.name || "Unknown employee"}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {new Date(leave.from).toLocaleDateString()} – {new Date(leave.to).toLocaleDateString()} · {leave.type || "Leave"}
+                  </p>
+                  {dateErrors[leave._id] && <p className="mt-1 text-xs font-medium text-rose-700">{dateErrors[leave._id]}</p>}
                 </div>
-                {canApproveLeaves && !dateErrors[l._id] && (
-                  <div className="space-x-2">
-                    <button onClick={()=>handleApprove(l._id)} className="bg-green-600 text-white px-3 py-1 rounded">Approve</button>
-                    <button onClick={()=>handleReject(l._id)} className="bg-red-600 text-white px-3 py-1 rounded">Reject</button>
+                {canApproveLeaves && !dateErrors[leave._id] && (
+                  <div className="flex shrink-0 gap-2">
+                    <button type="button" onClick={() => handleApprove(leave._id)} className="inline-flex min-h-9 items-center gap-2 rounded-md bg-teal-700 px-3 text-sm font-semibold text-white hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2">
+                      <FaCheck size={12} /> Approve
+                    </button>
+                    <button type="button" onClick={() => handleReject(leave._id)} className="inline-flex min-h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-600 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2">
+                      <FaTimes size={12} /> Reject
+                    </button>
                   </div>
                 )}
-                {dateErrors[l._id] && (
-                  <div className="text-gray-500 text-sm">Cannot process</div>
-                )}
+                {dateErrors[leave._id] && <span className="text-sm text-slate-400">Cannot process</span>}
               </li>
             ))}
-            {pendingLeaves.length===0 && <li className="text-sm text-gray-500">No pending leave requests.</li>}
+            {pendingLeaves.length === 0 && <li className="px-5 py-12 text-center text-sm text-slate-500">No pending leave requests.</li>}
           </ul>
-        </div>
+        </section>
       </div>
     </div>
   );
