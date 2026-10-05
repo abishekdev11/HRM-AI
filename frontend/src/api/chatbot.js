@@ -23,72 +23,15 @@ API.interceptors.request.use(
 // ----------------------------
 
 export const askAI = async (question) => {
-  const response = await API.post(
-    "/api/chat",
-    { question },
-    {
-      responseType: "blob",
-    }
-  );
-
-  const transcript = decodeURIComponent(
-    response.headers["x-transcript"]
-  );
-
-  const answer = decodeURIComponent(
-    response.headers["x-answer"]
-  );
-
-  const language = response.headers["x-language"];
-
-  const audio = URL.createObjectURL(response.data);
-
-  return {
-    transcript,
-    answer,
-    language,
-    audio,
-  };
+  const response = await API.post("/api/chat", { question });
+  return response.data;
 };
 
-// ----------------------------
-// Voice Chat
-// ----------------------------
-
-export const askAIAudio = async (audioBlob) => {
+export const askAIAudio = async (audioBlob, filename) => {
   const formData = new FormData();
-
-  formData.append("audio", audioBlob, "voice.webm");
-
-  const response = await API.post(
-    "/api/chat",
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      responseType: "blob",
-    }
-  );
-
-  const transcript = decodeURIComponent(
-    response.headers["x-transcript"]
-  );
-
-  const answer = decodeURIComponent(
-    response.headers["x-answer"]
-  );
-
-  const language = response.headers["x-language"];
-
-  const audio = URL.createObjectURL(response.data);
-
-  return {
-    transcript,
-    answer,
-    language,
-    audio,
-  };
+  formData.append("audio", audioBlob, filename);
+  const response = await API.post("/api/chat", formData);
+  return response.data;
 };
 
 // ----------------------------

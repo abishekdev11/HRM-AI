@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const MESSAGE_PREVIEW_LENGTH = 500;
 
-function Message({ sender, text }) {
+function Message({ sender, text, audioSrc }) {
   const isUser = sender === "user";
   const [isExpanded, setIsExpanded] = useState(false);
   const shouldCollapse = !isUser && text.length > MESSAGE_PREVIEW_LENGTH;
@@ -32,6 +32,11 @@ function Message({ sender, text }) {
             </button>
           )}
         </p>
+        {audioSrc && (
+          <audio className="mt-3 w-full" controls preload="none" src={audioSrc}>
+            Audio playback is not supported by this browser.
+          </audio>
+        )}
       </div>
     </div>
   );

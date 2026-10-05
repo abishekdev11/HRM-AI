@@ -43,6 +43,7 @@ function ChatContainer({
               key={index}
               sender={message.sender}
               text={message.text}
+              audioSrc={message.audioSrc}
             />
           ))}
 
